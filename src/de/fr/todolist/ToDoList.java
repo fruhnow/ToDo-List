@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -27,7 +29,9 @@ import javax.swing.ListSelectionModel;
 
 public class ToDoList extends JFrame
 {
-	private DefaultListModel<String> lm;
+	private DefaultListModel<Entry> lm;
+	private JTextField txtInput;
+	private JTextField txtCount;
 
 	public ToDoList()
 	{
@@ -35,13 +39,69 @@ public class ToDoList extends JFrame
 		this.setSize(500, 300);
 		Container con = getContentPane();
 		con.setLayout(new BorderLayout());
+		this.addWindowListener(new WindowListener()
+		{
+			@Override
+			public void windowClosing(WindowEvent arg0)
+			{
+				exit();
 
-		// Textfeld erzeugen und hinzufügen
-		JTextField txtInput = new JTextField();
-		con.add(txtInput, BorderLayout.NORTH);
+			}
+
+			@Override
+			public void windowActivated(WindowEvent arg0)
+			{
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void windowClosed(WindowEvent arg0)
+			{
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void windowDeactivated(WindowEvent arg0)
+			{
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void windowDeiconified(WindowEvent arg0)
+			{
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void windowIconified(WindowEvent arg0)
+			{
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void windowOpened(WindowEvent arg0)
+			{
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+		// Textfeld-Panel und Textfelder erzeugen und hinzufügen
+		JPanel tp = new JPanel();
+		tp.setLayout(new GridLayout(1, 2));
+		con.add(tp, BorderLayout.NORTH);
+		txtInput = new JTextField();
+		txtCount = new JTextField();
+		tp.add(txtInput, BorderLayout.WEST);
+		tp.add(txtCount, BorderLayout.EAST);
 
 		// Scrollbare Liste erzeugen und hinzufügen
-		lm = new DefaultListModel<String>();
+		lm = new DefaultListModel<Entry>();
 		JList list = new JList(lm);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		JScrollPane listscroll = new JScrollPane(list);
@@ -72,39 +132,27 @@ public class ToDoList extends JFrame
 			@Override
 			public void actionPerformed(ActionEvent arg0)
 			{
-				lm.addElement(txtInput.getText());
-				txtInput.setText("");
-				txtInput.requestFocus();
+				addElement();
 			}
 
 		});
 
-		txtInput.addKeyListener(new KeyListener()
+		txtInput.addActionListener(new ActionListener()
 		{
-
 			@Override
-			public void keyPressed(KeyEvent e)
+			public void actionPerformed(ActionEvent e)
 			{
-				// TODO Auto-generated method stub
+				addElement();
 			}
-
+		});
+		
+		txtCount.addActionListener(new ActionListener()
+		{
 			@Override
-			public void keyReleased(KeyEvent e)
+			public void actionPerformed(ActionEvent e)
 			{
-				// TODO Auto-generated method stub
+				addElement();
 			}
-
-			@Override
-			public void keyTyped(KeyEvent e)
-			{
-				if (e.getKeyChar() == KeyEvent.VK_ENTER)
-				{
-					lm.addElement(txtInput.getText());
-					txtInput.setText("");
-					txtInput.requestFocus();
-				}
-			}
-
 		});
 
 		btnRemove.addActionListener(new ActionListener()
@@ -151,12 +199,33 @@ public class ToDoList extends JFrame
 		{
 			try
 			{
-				BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
-//				for (int i = 0; i < in.lines().count(); i++)
+				BufferedReader in = new BufferedReader(new InputStreamReader(
+						new FileInputStream(f)));
 				String line;
-				while((line = in.readLine()) != null)
+				while ((line = in.readLine()) != null)
 				{
-					lm.addElement(line);
+					String[] splittedLine = line.split(",");
+					System.out.println(splittedLine.length - 1);
+					if (splittedLine.length == 0)
+					{
+						return;
+					}
+
+					StringBuilder build = new StringBuilder();
+					for (int i = 0; i < (splittedLine.length - 1); i++)
+					{
+						build.append(splittedLine[i]);
+						if (i != (splittedLine.length - 2))
+						{
+							build.append(", ");
+						}
+					}
+					Entry newEntry = new Entry(
+							build.toString(),
+							Integer.parseInt(splittedLine[splittedLine.length - 1]
+									.trim())); // TODO: Exception bei
+												// ParseInt-Fail fangen
+					lm.addElement(newEntry);
 				}
 				in.close();
 			} catch (IOException e)
@@ -177,8 +246,8 @@ public class ToDoList extends JFrame
 					new FileOutputStream(f), "UTF8"));
 			for (int i = 0; i < lm.getSize(); i++)
 			{
-				String line = lm.getElementAt(i);
-				out.write(lm.getElementAt(i));
+				String line = lm.getElementAt(i).toString();
+				out.write(lm.getElementAt(i).toString());
 				out.newLine();
 			}
 			out.close();
@@ -190,6 +259,16 @@ public class ToDoList extends JFrame
 
 		this.dispose();
 
+	}
+
+	private void addElement()
+	{
+		Entry newElement = new Entry(txtInput.getText(),
+				Integer.parseInt(txtCount.getText()));
+		lm.addElement(newElement);
+		txtInput.setText("");
+		txtCount.setText("");
+		txtInput.requestFocus();
 	}
 
 	public static void main(String[] args)
